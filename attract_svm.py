@@ -4,6 +4,8 @@
 import random
 import copy
 from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
 
 def read_in_feature_vectors(path):
     fin = open(path, 'r')
@@ -42,7 +44,9 @@ ratings = read_in_ratings("rating_withoutfail.csv")
 
 trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
 
-classifier = SVR()
+boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
+boosted_svr = SVR()
+classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
 classifier.fit(trainset, trainlabels)
 sum_error = 0
 for i, pred in enumerate(classifier.predict(testset)):

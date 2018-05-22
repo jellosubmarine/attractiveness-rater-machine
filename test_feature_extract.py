@@ -29,6 +29,15 @@ def process_image(path):
     
     return landmarks, img
 
+#Evaluate nose length
+def eval_nose_length(landmarks):
+    return np.linalg.norm(np.asarray(landmarks[27])-np.asarray(landmarks[33]))
+
+#Evaluate nose curvature
+def eval_nose_roundness(landmarks):
+    nose_points = landmarks[31:36]
+    return np.polyfit(nose_points[:][0],nose_points[:][1], 2)[2]
+
 # Create symmetry evaluations for facial features
 def eval_symmetry(landmarks, sym_mapping):
     s = 0
@@ -53,8 +62,10 @@ def create_feature_vec(landmarks):
     fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym))
     fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym))
     fv.append(eval_center(landmarks, sym.nose_center))
-    fv.append(eval_center(landmarks, sym.mouth_center))
+    fv.append(eval_center(landmarks, sym.mouth_center)) 
     fv.append(eval_center(landmarks, sym.chin_center))
+    fv.append(eval_nose_length(landmarks))
+    fv.append(eval_nose_roundness(landmarks))
     return fv
 
 # Dump feature vector data into a file
