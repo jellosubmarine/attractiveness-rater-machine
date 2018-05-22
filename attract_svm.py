@@ -6,6 +6,9 @@ import copy
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+
+STDDEV_THRESHOLD = 1.0
 
 def read_in_feature_vectors(path):
     fin = open(path, 'r')
@@ -22,6 +25,13 @@ def read_in_ratings(path):
     fin.close()
     ratings = [ float(line[1].strip()) for line in t ]
     return ratings
+
+def read_in_stddev_info(path):
+    fin = open(path,'r')
+    t = [ line.split(',') for line in fin.read().split('\n') if line ][1:]
+    fin.close()
+    stddevs = [ float(line[2].strip()) for line in t ]
+    return stddevs
 
 def divide_dataset(vectorset, labels, part_size):
     datalen = len(vectorset)
@@ -41,16 +51,25 @@ def divide_dataset(vectorset, labels, part_size):
 
 feature_vecs = read_in_feature_vectors("featurevectors.txt")
 ratings = read_in_ratings("rating_withoutfail.csv")
+stddevs = read_in_stddev_info("rating_withoutfail.csv")
 
 trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
 
-classifier = SVR(kernel='rbf')
+#~ classifier = SVR()
+classifier = RandomForestRegressor(n_estimators=20000)
 classifier.fit(trainset, trainlabels)
 sum_error = 0
+correct_classification = 0
 for i, pred in enumerate(classifier.predict(testset)):
+    #~ pred = 2.5
+    #~ print "Prediction is:", pred
+    #~ raw_input()
     sum_error += abs(pred - testlabels[i])
+    if abs(pred-testlabels[i]) < (stddevs[i]*STDDEV_THRESHOLD):
+        correct_classification += 1
 
 print sum_error/len(testlabels)
+print str(float(correct_classification)/len(testlabels)*100)+"%"
 
 #~ print "Params", classifier.coef_
 #~ y_pos = np.arange(len(classifier.coef_[0]))

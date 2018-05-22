@@ -124,6 +124,7 @@ def create_feature_vec(landmarks):
     fv.append(eval_center(landmarks, sym.chin_center))
     ratio, err = face_ellipse(landmarks)
     fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0)))
+    fv.append(ratio)
     fv.append(err)
     return fv
 
