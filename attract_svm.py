@@ -3,6 +3,8 @@
 
 import random
 import copy
+import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import AdaBoostRegressor
@@ -13,7 +15,7 @@ def read_in_feature_vectors(path):
     fin.close()
     fvs = []
     for line in t:
-        fvs.append([ int(x) for x in line ])
+        fvs.append([ float(x) for x in line ])
     return fvs
 
 def read_in_ratings(path):
@@ -46,10 +48,21 @@ trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, rating
 
 boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
 boosted_svr = SVR()
-classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+#classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+
+classifier = SVR(kernel='rbf')
 classifier.fit(trainset, trainlabels)
 sum_error = 0
 for i, pred in enumerate(classifier.predict(testset)):
     sum_error += abs(pred - testlabels[i])
 
 print sum_error/len(testlabels)
+
+#~ print "Params", classifier.coef_
+#~ y_pos = np.arange(len(classifier.coef_[0]))
+#~ div_size = [12, 10, 16, 4, 12, 4, 5, 4, 1]
+#~ coeffs = []
+#~ for i in range(len(div_size)):
+    #~ coeffs.append(classifier.coef_[0][i]*div_size[i])
+#~ plt.bar(y_pos,coeffs)
+#~ plt.show()
