@@ -8,10 +8,13 @@ import numpy as np
 
 import sym_mappings as sym
 
+align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
+
 # Read in image data
 def process_image(path):
+    global align
+    
     img = cv2.imread(path)
-    align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
     img = align.align(501,img)
     img_n,img_m,_ = img.shape
     bb = align.getLargestFaceBoundingBox(img)
@@ -66,6 +69,7 @@ def main(args):
     feature_vecs = []
     for i in range(1,501):
         print i
+        
         landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
         feature_vecs.append(create_feature_vec(landmarks))
     
