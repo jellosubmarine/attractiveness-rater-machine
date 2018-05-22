@@ -13,7 +13,7 @@ align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
 # Read in image data
 def process_image(path):
     global align
-    
+
     img = cv2.imread(path)
     img = align.align(501,img)
     img_n,img_m,_ = img.shape
@@ -68,11 +68,13 @@ def write_features_to_file(path,feature_vecs):
 def main(args):
     feature_vecs = []
     for i in range(1,501):
-        print i
-        
-        landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
-        feature_vecs.append(create_feature_vec(landmarks))
-    
+        try:
+            print i
+            landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
+            feature_vecs.append(create_feature_vec(landmarks))
+        except Exception,e:
+            print str(i) + " failed xd"
+
     write_features_to_file("featurevectors.txt",feature_vecs)
 
     # Display image
