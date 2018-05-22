@@ -2,7 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import random
-from sklearn.svm import LinearSVC
+import copy
+from sklearn.svm import SVR
+
+def read_in_feature_vectors(path):
+    fin = open(path, 'r')
+    t = [ line.split(' ') for line in fin.read().split('\n') if line ]
+    fin.close()
+    fvs = []
+    for line in t:
+        fvs.append([ int(x) for x in line ])
+    return fvs
 
 def read_in_ratings(path):
     fin = open(path,'r')
@@ -21,15 +31,21 @@ def divide_dataset(vectorset, labels, part_size):
     testlabels = []
     for i in shuffled_range[:int(datalen*part_size)]:
         trainset.append(copy.deepcopy(vectorset[i]))
-        trainlabels.append(labels[vectorset[i]])
+        trainlabels.append(labels[i])
     for i in shuffled_range[int(datalen*part_size):]:
         testset.append(copy.deepcopy(vectorset[i]))
-        testlabels.append(labels[vectorset[i]])
+        testlabels.append(labels[i])
     return trainset, trainlabels, testset, testlabels
 
-ratings = read_in_ratings("rating.csv")
+feature_vecs = read_in_feature_vectors("featurevectors.txt")
+ratings = read_in_ratings("rating_withoutfail.csv")
 
 trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
 
-classifier = LinearSVC()
-classifier.fit(trainica, trainlabels)
+classifier = SVR()
+classifier.fit(trainset, trainlabels)
+sum_error = 0
+for i, pred in enumerate(classifier.predict(testset)):
+    sum_error += abs(pred - testlabels[i])
+
+print sum_error/len(testlabels)
