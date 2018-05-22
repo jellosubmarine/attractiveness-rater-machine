@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
 
 STDDEV_THRESHOLD = 1.0
 
@@ -56,7 +57,12 @@ stddevs = read_in_stddev_info("rating_withoutfail.csv")
 trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
 
 #~ classifier = SVR()
-classifier = RandomForestRegressor(n_estimators=20000)
+#~ classifier = RandomForestRegressor(n_estimators=20000)
+#~ boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
+#~ boosted_svr = SVR()
+#classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+
+classifier = SVR(kernel='rbf')
 classifier.fit(trainset, trainlabels)
 sum_error = 0
 correct_classification = 0
