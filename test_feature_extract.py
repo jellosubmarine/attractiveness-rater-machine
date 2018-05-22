@@ -18,7 +18,7 @@ boks = np.int0(boks)
 
 cv2.drawContours(img, [boks], 0, (0,0,255), 2)
 for point in landmarks:
-    cv2.circle(img,point,3,(0,0,255),-1)
+    cv2.circle(img,point,2,(0,0,255),-1)
 
 cv2.imshow("Soust",img)
 
