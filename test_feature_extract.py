@@ -13,7 +13,7 @@ landmarks = align.findLandmarks(img,bb)
 cv2.rectangle(img,(bb.left(),bb.bottom()),(bb.right(),bb.top()),(0,255,0),3)
 
 for point in landmarks:
-    cv2.circle(img,point,3,(0,0,255),-1)
+    cv2.circle(img,point,2,(0,0,255),-1)
 
 cv2.imshow("Soust",img)
 
