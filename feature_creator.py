@@ -17,6 +17,29 @@ SHOW_PLOTS = False
 def eval_nose_length(landmarks):
     return np.linalg.norm(np.asarray(landmarks[27])-np.asarray(landmarks[33]))
 
+#Evaluate nose height - eyes height ratio (from chin)
+def eval_nose_eyes_height_ratio(landmarks):
+    nose_height = np.linalg.norm(np.asarray(landmarks[33])-np.asarray(landmarks[8]))
+    eyes_height = np.linalg.norm(np.asarray(landmarks[39])-np.asarray(landmarks[8]))
+    return nose_height/eyes_height
+#Evaluate nose height - mouth height ratio (from chin)
+def eval_nose_mouth_height_ratio(landmarks):
+    nose_height = np.linalg.norm(np.asarray(landmarks[33])-np.asarray(landmarks[8]))
+    mouth_height = np.linalg.norm(np.asarray(landmarks[57])-np.asarray(landmarks[8]))
+    return nose_height/mouth_height
+
+#Evaluate nose height - mouth height ratio (from chin)
+def eval_eyes_mouth_height_ratio(landmarks):
+    eyes_height = np.linalg.norm(np.asarray(landmarks[39])-np.asarray(landmarks[8]))
+    mouth_height = np.linalg.norm(np.asarray(landmarks[57])-np.asarray(landmarks[8]))
+    return eyes_height/mouth_height
+
+#Evaluate nose height - mouth height ratio (from chin)
+def eval_eyes_eyebrows_height_ratio(landmarks):
+    eyes_height = np.linalg.norm(np.asarray(landmarks[39])-np.asarray(landmarks[8]))
+    eyebrows_height = np.linalg.norm(np.asarray(landmarks[19])-np.asarray(landmarks[8]))
+    return eyes_height/eyebrows_height
+
 #Evaluate nose curvature
 def eval_nose_roundness(landmarks):
     nose_points = landmarks[31:36]
@@ -128,11 +151,11 @@ def create_feature_vec(landmarks):
     fv.append(ratio) # r = 0.630
     # fv.append(err) # r = 0.152
     fv.append(eval_pupil_face_ratio(landmarks)) # r = 0.190
-    fv.append(eval_nose_to_eye_by_eye_width(landmarks)) # r = -0.097
+    #fv.append(eval_nose_to_eye_by_eye_width(landmarks)) # r = -0.097
     fv.append(eval_face_side_to_eye_outside_by_eye_to_nose(landmarks)) # r = -0.223
     fv.append(eval_mouth_horizontal(landmarks)) # r = -0.151
     fv.append(eval_face_side_to_brow_inside_to_face_side(landmarks)) # r = -0.280
-    fv.append(eval_face_side_to_eye_inside_to_face_side(landmarks)) # r = -0.106
+    #fv.append(eval_face_side_to_eye_inside_to_face_side(landmarks)) # r = -0.106
     fv.append(eval_face_side_to_nose_side_to_face_side(landmarks)) # r = 0.183
     return fv
 
@@ -193,9 +216,9 @@ def main(args):
     #Add feature vector labels here!
     
     labels = ['Nose_length', 'Face_ellipse_ratio', 'Pupil_face_ratio',
-              'Nose_to_eye_by_eye_width', 'Face_side_to_eye_outside_by_eye_to_nose',
+              'Face_side_to_eye_outside_by_eye_to_nose',
               'Mouth_horizontal', 'Face_side_with_brow',
-              'Face_side_with_eye', 'Face_side_with_nose',
+              'Face_side_with_nose',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
