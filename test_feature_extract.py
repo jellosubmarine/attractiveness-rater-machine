@@ -11,6 +11,7 @@ from math import atan, pi, floor, ceil
 import imutils
 import sym_mappings as sym
 import orthoregress as orgr
+import pandas as pd
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
 DISPLAY_IMAGE = False # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
