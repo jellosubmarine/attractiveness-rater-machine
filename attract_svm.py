@@ -40,14 +40,21 @@ def divide_dataset(vectorset, labels, part_size):
         testlabels.append(labels[i])
     return trainset, trainlabels, testset, testlabels
 
+def graph_feature(xs, ys):
+    plt.plot(xs, ys, 'b.')
+    plt.show()
+
 def test_dataset(features, ratings, stddevs, repeats):
     error_results = []
     stddev_results = []
     
+    testlabels_all = []
+    predlabels_all = []
     for repeat_time in range(repeats):
         print "Testing "+str(repeat_time+1)+'/'+str(repeats)
         
-        trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
+        trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.8)
+        testlabels_all += testlabels
 
         #~ classifier = SVR()
         #~ classifier = RandomForestRegressor(n_estimators=20000)
@@ -59,7 +66,9 @@ def test_dataset(features, ratings, stddevs, repeats):
         classifier.fit(trainset, trainlabels)
         sum_error = 0
         correct_classification = 0
+        predlabels = []
         for i, pred in enumerate(classifier.predict(testset)):
+            predlabels.append(pred)
             #~ pred = 2.5
             #~ print "Prediction is:", pred
             #~ raw_input()
@@ -67,8 +76,12 @@ def test_dataset(features, ratings, stddevs, repeats):
             if abs(pred-testlabels[i]) < (stddevs[i]*STDDEV_THRESHOLD):
                 correct_classification += 1
         
+        predlabels_all += predlabels
+        
         error_results.append(float(sum_error)/len(testlabels))
         stddev_results.append(float(correct_classification)/len(testlabels))
+    
+    graph_feature(testlabels_all, predlabels_all)
     
     print "Average error:", sum(error_results)/len(error_results)
     print "How many are within", STDDEV_THRESHOLD, "standard deviations:", sum(stddev_results)/len(stddev_results)
