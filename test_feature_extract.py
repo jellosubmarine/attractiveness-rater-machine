@@ -6,7 +6,10 @@ import openface
 import cv2
 import numpy as np
 from numpy.linalg import eig, inv
+from math import atan, pi, floor, ceil
+import imutils
 import sym_mappings as sym
+import orthoregress as orgr
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
 
@@ -15,17 +18,53 @@ def process_image(path):
     global align
 
     img = cv2.imread(path)
-    img = align.align(501,img)
     img_n,img_m,_ = img.shape
     bb = align.getLargestFaceBoundingBox(img)
     landmarks = align.findLandmarks(img,bb)
+    
+    # Find line of symmetry and rotate image accordingly
+    midline = [8, 27, 28, 29, 30, 51, 57, 62, 66] # All midline points except for the tip of the nose, which is left out
+    invslope, invintercept, _, _, _ = orgr.orthoregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
+    # Rotate
+    if invslope == 0:
+        # everything is great, no rotation required
+        pass
+    else:
+        img = imutils.rotate_bound(img, atan(invslope)*180/pi)
+    
+    bb = align.getLargestFaceBoundingBox(img)
+    landmarks = align.findLandmarks(img,bb)
+    invslope, invintercept, _, _, _ = orgr.orthoregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
+    assert (abs(atan(invslope)*180/pi) < 0.5)
+    
+    # Crop the face part
+    ys = [ p[1] for p in landmarks ]
+    xs = [ p[0] for p in landmarks ]
+    miny = min(ys)
+    maxy = max(ys)
+    minx = min(xs)
+    maxx = max(xs)
+    # Make sure axis of symmetry is in the middle of the image
+    minx = int(floor(min(minx, 2*invintercept-maxx)))
+    maxx = int(ceil(max(maxx, 2*invintercept-minx)))
+    # Do the actual cropping
+    img = img[miny:maxy, minx:maxx]
+    # Scale image to width 500
+    scale_factor = 500./(maxx-minx)
+    img = cv2.resize(img, None, fx = scale_factor, fy = scale_factor, interpolation = cv2.INTER_CUBIC)
+    
+    # Re-adjust landmarks
+    for i in range(len(landmarks)):
+        x,y = landmarks[i]
+        landmarks[i] = int(round((x-minx)*scale_factor)), int(round((y-miny)*scale_factor))
     
     # Mark face landmarks on image
     for point in landmarks:
         cv2.circle(img,point,2,(255,0,0),-1)
     
-    # Create line of symmetry
-    cv2.line(img,(img_m/2,img_n),(img_m/2,0),(255,0,0),2)
+    # Draw line of symmetry on the face
+    img_n,img_m,_ = img.shape
+    cv2.line(img,(img_m/2,0),(img_m/2,img_n),(255,0,0),2)
     
     return landmarks, img
 
