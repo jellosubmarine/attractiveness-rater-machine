@@ -142,7 +142,7 @@ def main(args):
     all_landmarks = read_in_landmarks("landmarks.txt")
     #Add feature vector labels here!
     
-    labels = ['Nose_length', 'Face_ellipse_ratio', 'True rating', 'Stdev']
+    labels = ['Nose_length', 'Face_ellipse_ratio', 'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
     for i in range(1,501):
