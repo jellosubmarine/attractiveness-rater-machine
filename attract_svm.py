@@ -16,23 +16,13 @@ def read_in_feature_vectors(path):
     t = [ line.split(' ') for line in fin.read().split('\n') if line ]
     fin.close()
     fvs = []
+    ratings = []
+    stddevs = []
     for line in t:
-        fvs.append([ float(x) for x in line ])
-    return fvs
-
-def read_in_ratings(path):
-    fin = open(path,'r')
-    t = [ line.split(',') for line in fin.read().split('\n') if line ][1:]
-    fin.close()
-    ratings = [ float(line[1].strip()) for line in t ]
-    return ratings
-
-def read_in_stddev_info(path):
-    fin = open(path,'r')
-    t = [ line.split(',') for line in fin.read().split('\n') if line ][1:]
-    fin.close()
-    stddevs = [ float(line[2].strip()) for line in t ]
-    return stddevs
+        fvs.append([ float(x) for x in line[:-2] ])
+        ratings.append(float(line[-2]))
+        stddevs.append(float(line[-1]))
+    return fvs, ratings, stddevs
 
 def divide_dataset(vectorset, labels, part_size):
     datalen = len(vectorset)
@@ -85,9 +75,7 @@ def test_dataset(features, ratings, stddevs, repeats):
     print "Standard deviation for avg error:", np.std(np.array(error_results))
     print "Standard deviation for std results:", np.std(np.array(stddev_results))
 
-feature_vecs = read_in_feature_vectors("featurevectors.txt")
-ratings = read_in_ratings("rating.csv")
-stddevs = read_in_stddev_info("rating.csv")
+feature_vecs, ratings, stddevs = read_in_feature_vectors("featurevectors.txt")
 
 test_dataset(feature_vecs, ratings, stddevs, 1000)
 
