@@ -12,7 +12,7 @@ import imutils
 import orthoregress as orgr
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
-DISPLAY_IMAGE = False # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
+DISPLAY_IMAGE = True # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
 
 # Read in image data
 def process_image(path):
@@ -80,8 +80,6 @@ def process_image(path):
 def main(args):
     img = None
     failed_images = []
-    
-    ratings, stddevs = read_in_ratings("rating.csv")
     
     if not DISPLAY_IMAGE:
         landmark_file = open("landmarks.txt", 'w')
