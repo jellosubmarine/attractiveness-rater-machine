@@ -11,7 +11,7 @@ from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 #Evaluate nose length
 def eval_nose_length(landmarks):
@@ -196,7 +196,7 @@ def main(args):
               'Nose_to_eye_by_eye_width', 'Face_side_to_eye_outside_by_eye_to_nose',
               'Mouth_horizontal', 'Face_side_with_brow',
               'Face_side_with_eye', 'Face_side_with_nose',
-              'True rating', 'Stdev']
+              'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
     for i in range(1,501):
