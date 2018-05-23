@@ -11,7 +11,7 @@ from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 #Evaluate nose length
 def eval_nose_length(landmarks):
@@ -169,6 +169,10 @@ def create_feature_vec(landmarks):
     #~ fv.append(eval_face_side_to_nose_side_to_face_side(landmarks)) # r = 0.183
     fv.append(eval_nose_vertical_prop(landmarks)) # r = -0.435
     #~ fv.append(eval_mouth_size(landmarks)) # r = 0.021
+    fv.append(eval_nose_eyes_height_ratio(landmarks)) # r = -0.414
+    # fv.append(eval_nose_mouth_height_ratio(landmarks)) # r = -0.078
+    # fv.append(eval_eyes_mouth_height_ratio(landmarks)) # r = 0.157
+    # fv.append(eval_eyes_eyebrows_height_ratio(landmarks)) # r = 0.028
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -228,7 +232,7 @@ def main(args):
     #Add feature vector labels here!
     
     labels = ['Nose_length', 'Face_ellipse_ratio', 'Face_side_with_brow',
-              'Nose_vertical_prop',
+              'Nose_vertical_prop', 'Eyes-nose_height_ratio',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
@@ -240,6 +244,7 @@ def main(args):
             
             df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])], columns=labels))
         except Exception,e:
+            print e
             print str(i) + " failed xd"
             failed_images.append(i)
     
