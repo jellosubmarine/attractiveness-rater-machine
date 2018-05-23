@@ -11,7 +11,7 @@ from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 #Evaluate nose length
 def eval_nose_length(landmarks):
@@ -170,10 +170,9 @@ def read_in_ratings(path):
     stddevs = [ float(line[2].strip()) for line in t ]
     return ratings, stddevs
     
-def graph_feature(feature_vecs, ratings, feature_index):
-    xs = [ v[feature_index] for v in feature_vecs ]
-    plt.plot(xs, ratings, 'b.')
-    plt.title(str(feature_index)+", r = "+str(pearsonr(xs, ratings)[0]))
+def graph_feature(feature_name, feature, ratings):
+    plt.plot(feature, ratings, 'b.')
+    plt.title(feature_name+", r = "+str(pearsonr(feature, ratings)[0]))
     plt.show()
 
 def main(args):
@@ -199,13 +198,10 @@ def main(args):
         except Exception,e:
             print str(i) + " failed xd"
             failed_images.append(i)
-    #BORKEN AFTER PANDAS UPDATE
-    # for i in range(len(feature_vecs[0])-2):
-    #     graph_feature(feature_vecs, ratings, i)
     
     if SHOW_PLOTS:
-        for i in range(len(feature_vecs[0])-2):
-            graph_feature(feature_vecs, ratings, i)
+        for i in range(len(labels)-2):
+            graph_feature(labels[i], df[labels[i]], ratings)
     
     #write_features_to_file("featurevectors.csv",feature_vecs)
     df.to_csv('featurevectors.csv')
