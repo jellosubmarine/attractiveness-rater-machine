@@ -4,8 +4,10 @@
 import cv2
 import numpy as np
 import scipy
+import matplotlib.pyplot as plt
 from numpy.linalg import eig, inv
 from math import atan, pi, floor, ceil
+from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
@@ -66,21 +68,21 @@ def face_ellipse(landmarks):
 # Create feature vector for image
 def create_feature_vec(landmarks):
     fv = []
-    fv.append(eval_symmetry(landmarks, sym.eye_sym))
-    fv.append(eval_symmetry(landmarks, sym.brow_sym))
-    fv.append(eval_symmetry(landmarks, sym.face_sym))
-    fv.append(eval_symmetry(landmarks, sym.nose_sym))
-    fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym))
-    fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym))
-    fv.append(eval_center(landmarks, sym.nose_center))
-    fv.append(eval_center(landmarks, sym.mouth_center)) 
-    fv.append(eval_center(landmarks, sym.chin_center))
-    fv.append(eval_nose_length(landmarks))
-    fv.append(eval_nose_roundness(landmarks))
-    ratio, err = face_ellipse(landmarks)
-    fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0)))
-    fv.append(ratio)
-    fv.append(err)
+    fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
+    fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
+    fv.append(eval_symmetry(landmarks, sym.face_sym)) # r = 0.060
+    fv.append(eval_symmetry(landmarks, sym.nose_sym)) # r = 0.010
+    fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.125
+    fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.109
+    fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
+    fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
+    fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
+    fv.append(eval_nose_length(landmarks)) # r = 0.307
+    fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
+    ratio, err = face_ellipse(landmarks) 
+    fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
+    fv.append(ratio) # r = 0.630
+    fv.append(err) # r = 0.152
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -123,6 +125,12 @@ def read_in_ratings(path):
     ratings = [ float(line[1].strip()) for line in t ]
     stddevs = [ float(line[2].strip()) for line in t ]
     return ratings, stddevs
+    
+def graph_feature(feature_vecs, ratings, feature_index):
+    xs = [ v[feature_index] for v in feature_vecs ]
+    plt.plot(xs, ratings, 'b.')
+    plt.title(str(feature_index)+", r = "+str(pearsonr(xs, ratings)[0]))
+    plt.show()
 
 def main(args):
     img = None
@@ -143,6 +151,9 @@ def main(args):
         except Exception,e:
             print str(i) + " failed xd"
             failed_images.append(i)
+    
+    for i in range(len(feature_vecs[0])-2):
+        graph_feature(feature_vecs, ratings, i)
     
     write_features_to_file("featurevectors.txt",feature_vecs)
     print "Feature vector creation completed"
