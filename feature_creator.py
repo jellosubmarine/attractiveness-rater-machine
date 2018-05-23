@@ -68,21 +68,21 @@ def face_ellipse(landmarks):
 # Create feature vector for image
 def create_feature_vec(landmarks):
     fv = []
-    fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
-    fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
-    fv.append(eval_symmetry(landmarks, sym.face_sym)) # r = 0.060
-    fv.append(eval_symmetry(landmarks, sym.nose_sym)) # r = 0.010
-    fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.125
-    fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.109
-    fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
-    fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
-    fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
+    # fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
+    # fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
+    # fv.append(eval_symmetry(landmarks, sym.face_sym)) # r = 0.060
+    # fv.append(eval_symmetry(landmarks, sym.nose_sym)) # r = 0.010
+    # fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.125
+    # fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.109
+    # fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
+    # fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
+    # fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
     fv.append(eval_nose_length(landmarks)) # r = 0.307
-    fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
+    # fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
     ratio, err = face_ellipse(landmarks) 
-    fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
+    #fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
     fv.append(ratio) # r = 0.630
-    fv.append(err) # r = 0.152
+    # fv.append(err) # r = 0.152
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -140,22 +140,27 @@ def main(args):
     ratings, stddevs = read_in_ratings("rating.csv")
     
     all_landmarks = read_in_landmarks("landmarks.txt")
+    #Add feature vector labels here!
     
+    labels = ['Nose_length', 'Face_ellipse_ratio', 'True rating', 'Stdev']
+    df = pd.DataFrame.from_records([], columns=labels)
+    print df
     for i in range(1,501):
         try:
-            print i
+            #print i
             
             landmarks = all_landmarks[i-1]
             
-            feature_vecs.append(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])
+            df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])], columns=labels))
         except Exception,e:
             print str(i) + " failed xd"
             failed_images.append(i)
+    #BORKEN AFTER PANDAS UPDATE
+    # for i in range(len(feature_vecs[0])-2):
+    #     graph_feature(feature_vecs, ratings, i)
     
-    for i in range(len(feature_vecs[0])-2):
-        graph_feature(feature_vecs, ratings, i)
-    
-    write_features_to_file("featurevectors.txt",feature_vecs)
+    #write_features_to_file("featurevectors.csv",feature_vecs)
+    df.to_csv('featurevectors.csv')
     print "Feature vector creation completed"
     print "Failed image numbers:",
     for i in failed_images:
