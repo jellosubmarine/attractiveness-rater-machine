@@ -44,16 +44,18 @@ def divide_dataset(vectorset, labels, part_size):
 feature_vecs = read_in_feature_vectors("featurevectors.txt")
 ratings = read_in_ratings("rating_withoutfail.csv")
 
-trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
+trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.8)
 
 boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
 boosted_svr = SVR()
-#classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+classifier = AdaBoostRegressor(boosted_forest, n_estimators = 100, random_state = 42)
 
-classifier = SVR(kernel='rbf')
+#classifier = SVR(kernel='rbf')
+#classifier = boosted_forest
 classifier.fit(trainset, trainlabels)
 sum_error = 0
 for i, pred in enumerate(classifier.predict(testset)):
+    print pred
     sum_error += abs(pred - testlabels[i])
 
 print sum_error/len(testlabels)
