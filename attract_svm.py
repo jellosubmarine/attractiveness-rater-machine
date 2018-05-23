@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 import pandas as pd
+from sklearn.model_selection import RandomizedSearchCV
 
 STDDEV_THRESHOLD = 0.5
 
@@ -59,12 +60,14 @@ def test_dataset(features, ratings, stddevs, repeats):
         testlabels_all += list(testlabels)
 
         #~ classifier = SVR()
-        #~ classifier = RandomForestRegressor(n_estimators=20000)
-        #~ boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
-        #~ boosted_svr = SVR()
-        #classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+        #classifier = RandomForestRegressor(n_estimators=200)
+        #boosted_forest = RandomForestRegressor(n_estimators = 300)
+        #boosted_svr = SVR()
+        
+        classifier = AdaBoostRegressor(SVR(kernel='rbf'))#,loss='square',learning_rate=1,n_estimators = 150)
 
-        classifier = SVR(kernel='rbf')
+        # classifier = SVR(kernel='rbf')
+
         classifier.fit(trainset, trainlabels)
         sum_error = 0
         correct_classification = 0
@@ -77,7 +80,7 @@ def test_dataset(features, ratings, stddevs, repeats):
             sum_error += abs(pred - testlabels[i])
             if abs(pred-testlabels[i]) < (stddevs[i]*STDDEV_THRESHOLD):
                 correct_classification += 1
-        
+
         predlabels_all += predlabels
         
         error_results.append(float(sum_error)/len(testlabels))
@@ -90,6 +93,36 @@ def test_dataset(features, ratings, stddevs, repeats):
     print "Standard deviation for avg error:", np.std(np.array(error_results))
     print "Standard deviation for std results:", np.std(np.array(stddev_results))
 
+def find_best_parameters(features, ratings):
+    param_dist = {
+        'n_estimators': [50, 100, 150],
+        'learning_rate' : [0.01,0.05,0.1,0.3,1,1.5,2],
+        'loss' : ['linear', 'square', 'exponential']
+        }
+    pre_gs_inst = RandomizedSearchCV(AdaBoostRegressor(SVR(kernel='rbf')),
+    param_distributions = param_dist,
+    cv=3,
+    n_iter = 10,
+    n_jobs=-1)
+
+    pre_gs_inst.fit(features, ratings)
+
+    print pre_gs_inst.best_params_
+
+    param_dist = {
+        'epsilon': [0.05,0.07,0.1,0.13,0.15],
+        'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
+        'shrinking' : [True, False]
+        }
+    pre_gs_inst = RandomizedSearchCV(SVR(),
+    param_distributions = param_dist,
+    cv=3,
+    n_iter = 10,
+    n_jobs=-1)
+
+    pre_gs_inst.fit(features, ratings)
+
+    print pre_gs_inst.best_params_
 #feature_vecs, ratings, stddevs = read_in_feature_vectors("featurevectors.csv")
 features = pd.read_csv('featurevectors.csv')
 ratings = np.array(features['True_rating'])
@@ -97,7 +130,8 @@ stddevs = np.array(features['Stdev'])
 features= features.drop('True_rating', axis = 1)
 features= features.drop('Stdev', axis = 1)
 
-test_dataset(features, ratings, stddevs, 1000)
+test_dataset(features, ratings, stddevs, 100)
+# find_best_parameters(features, ratings)
 
 #~ print "Params", classifier.coef_
 #~ y_pos = np.arange(len(classifier.coef_[0]))
