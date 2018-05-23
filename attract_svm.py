@@ -86,8 +86,8 @@ def test_dataset(features, ratings, stddevs, repeats):
     print "Standard deviation for std results:", np.std(np.array(stddev_results))
 
 feature_vecs = read_in_feature_vectors("featurevectors.txt")
-ratings = read_in_ratings("rating_withoutfail.csv")
-stddevs = read_in_stddev_info("rating_withoutfail.csv")
+ratings = read_in_ratings("rating.csv")
+stddevs = read_in_stddev_info("rating.csv")
 
 test_dataset(feature_vecs, ratings, stddevs, 1000)
 

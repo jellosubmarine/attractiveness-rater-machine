@@ -5,6 +5,7 @@ import dlib
 import openface
 import cv2
 import numpy as np
+import scipy
 from numpy.linalg import eig, inv
 from math import atan, pi, floor, ceil
 import imutils
@@ -12,6 +13,7 @@ import sym_mappings as sym
 import orthoregress as orgr
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
+DISPLAY_IMAGE = False # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
 
 # Read in image data
 def process_image(path):
@@ -19,21 +21,26 @@ def process_image(path):
 
     img = cv2.imread(path)
     img_n,img_m,_ = img.shape
+    
+    midline = [8, 27, 28, 29, 51, 57, 62, 66] # All midline points except for two points on the tip of the nose, which are left out
+    
+    # Rotate until we are within 0.5 dgerees of straight
+    for i in range(5):
+        bb = align.getLargestFaceBoundingBox(img)
+        landmarks = align.findLandmarks(img,bb)
+        
+        # Find line of symmetry and rotate image accordingly
+        invslope, invintercept, _, _, _ = orgr.orthoregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
+        # Rotate
+        if abs(invslope) < 0.0087: # Approximately 0.5 degrees
+            # everything is great, no rotation required
+            break
+        else:
+            img = imutils.rotate_bound(img, atan(invslope)*180/pi)
+    
     bb = align.getLargestFaceBoundingBox(img)
     landmarks = align.findLandmarks(img,bb)
-    
-    # Find line of symmetry and rotate image accordingly
-    midline = [8, 27, 28, 29, 30, 51, 57, 62, 66] # All midline points except for the tip of the nose, which is left out
-    invslope, invintercept, _, _, _ = orgr.orthoregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
-    # Rotate
-    if invslope == 0:
-        # everything is great, no rotation required
-        pass
-    else:
-        img = imutils.rotate_bound(img, atan(invslope)*180/pi)
-    
-    bb = align.getLargestFaceBoundingBox(img)
-    landmarks = align.findLandmarks(img,bb)
+    #~ invslope, invintercept, _, _, _ = scipy.stats.linregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
     invslope, invintercept, _, _, _ = orgr.orthoregress([ landmarks[i][1] for i in midline ], [ landmarks[i][0] for i in midline ])
     assert (abs(atan(invslope)*180/pi) < 0.5)
     
@@ -58,13 +65,16 @@ def process_image(path):
         x,y = landmarks[i]
         landmarks[i] = int(round((x-minx)*scale_factor)), int(round((y-miny)*scale_factor))
     
-    # Mark face landmarks on image
-    for point in landmarks:
-        cv2.circle(img,point,2,(255,0,0),-1)
-    
-    # Draw line of symmetry on the face
-    img_n,img_m,_ = img.shape
-    cv2.line(img,(img_m/2,0),(img_m/2,img_n),(255,0,0),2)
+    if DISPLAY_IMAGE:
+        # Mark face landmarks on image
+        for i,point in enumerate(landmarks):
+            if i not in midline:
+                continue
+            cv2.circle(img,point,2,(255,0,0),-1)
+        
+        # Draw line of symmetry on the face
+        img_n,img_m,_ = img.shape
+        cv2.line(img,(img_m/2,0),(img_m/2,img_n),(255,0,0),1)
     
     return landmarks, img
 
@@ -142,19 +152,14 @@ def face_ellipse(landmarks):
     center = ellipse_center(a)
     phi = ellipse_angle_of_rotation2(a)
     a, b = axes
-    #~ arc = 4
-    #~ R = np.arange(0,arc*np.pi, 0.01)
-    #~ xx = center[0] + a*np.cos(R)*np.cos(phi) - b*np.sin(R)*np.sin(phi)
-    #~ yy = center[1] + a*np.cos(R)*np.sin(phi) + b*np.sin(R)*np.cos(phi)
-    #~ for i in range(len(xx)):
-        #~ cv2.circle(img,(int(xx[i]),int(yy[i])),1,(0,0,255),-1)
     
-    #~ cv2.imshow("Soust1",img)
-    
-    #~ while 1:
-        #~ key = cv2.waitKey(1)
-        #~ if key == 27:
-            #~ break
+    if DISPLAY_IMAGE:
+        arc = 4
+        R = np.arange(0,arc*np.pi, 0.01)
+        xx = center[0] + a*np.cos(R)*np.cos(phi) - b*np.sin(R)*np.sin(phi)
+        yy = center[1] + a*np.cos(R)*np.sin(phi) + b*np.sin(R)*np.cos(phi)
+        for i in range(len(xx)):
+            cv2.circle(img,(int(xx[i]),int(yy[i])),1,(0,0,255),-1)
     
     return float(b)/a, err
 
@@ -197,25 +202,40 @@ def write_features_to_file(path,feature_vecs):
 def main(args):
     img = None
     feature_vecs = []
+    failed_images = []
+    if not DISPLAY_IMAGE:
+        landmark_file = open("landmarks.txt", 'w')
     for i in range(1,501):
         try:
             print i
             
             landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
             
+            if not DISPLAY_IMAGE:
+                landmark_file.write(" ".join([ str(p[0]) + ' ' + str(p[1]) for p in landmarks ])+'\n')
+                cv2.imwrite("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg",img)
+            else:
+                # Display image
+                cv2.imshow("Soust",img)
+                
+                while 1:
+                    key = cv2.waitKey(1)
+                    if key == 27:
+                        break
+            
             feature_vecs.append(create_feature_vec(landmarks))
         except Exception,e:
             print str(i) + " failed xd"
-
-    write_features_to_file("featurevectors.txt",feature_vecs)
-
-    # Display image
-    #~ cv2.imshow("Soust",img)
+            failed_images.append(i)
     
-    #~ while 1:
-        #~ key = cv2.waitKey(1)
-        #~ if key == 27:
-            #~ break
+    if not DISPLAY_IMAGE:
+        landmark_file.close()
+        write_features_to_file("featurevectors.txt",feature_vecs)
+    print "Feature vector creation completed"
+    print "Failed image numbers:",
+    for i in failed_images:
+        print i,
+    print
 
 if __name__ == '__main__':
     import sys
