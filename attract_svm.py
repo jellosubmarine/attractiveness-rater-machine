@@ -50,32 +50,46 @@ def divide_dataset(vectorset, labels, part_size):
         testlabels.append(labels[i])
     return trainset, trainlabels, testset, testlabels
 
+def test_dataset(features, ratings, stddevs, repeats):
+    error_results = []
+    stddev_results = []
+    
+    for repeat_time in range(repeats):
+        print "Testing "+str(repeat_time+1)+'/'+str(repeats)
+        
+        trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
+
+        #~ classifier = SVR()
+        #~ classifier = RandomForestRegressor(n_estimators=20000)
+        #~ boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
+        #~ boosted_svr = SVR()
+        #classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
+
+        classifier = SVR(kernel='rbf')
+        classifier.fit(trainset, trainlabels)
+        sum_error = 0
+        correct_classification = 0
+        for i, pred in enumerate(classifier.predict(testset)):
+            #~ pred = 2.5
+            #~ print "Prediction is:", pred
+            #~ raw_input()
+            sum_error += abs(pred - testlabels[i])
+            if abs(pred-testlabels[i]) < (stddevs[i]*STDDEV_THRESHOLD):
+                correct_classification += 1
+        
+        error_results.append(float(sum_error)/len(testlabels))
+        stddev_results.append(float(correct_classification)/len(testlabels))
+    
+    print "Average error:", sum(error_results)/len(error_results)
+    print "How many are within", STDDEV_THRESHOLD, "standard deviations:", sum(stddev_results)/len(stddev_results)
+    print "Standard deviation for avg error:", np.std(np.array(error_results))
+    print "Standard deviation for std results:", np.std(np.array(stddev_results))
+
 feature_vecs = read_in_feature_vectors("featurevectors.txt")
 ratings = read_in_ratings("rating_withoutfail.csv")
 stddevs = read_in_stddev_info("rating_withoutfail.csv")
 
-trainset, trainlabels, testset, testlabels = divide_dataset(feature_vecs, ratings, 0.9)
-
-#~ classifier = SVR()
-#~ classifier = RandomForestRegressor(n_estimators=20000)
-#~ boosted_forest = RandomForestRegressor(n_estimators = 500, random_state = 42)
-#~ boosted_svr = SVR()
-#classifier = boosted_svr#AdaBoostRegressor(boosted_svr, n_estimators = 1000, random_state = 42)
-
-classifier = SVR(kernel='rbf')
-classifier.fit(trainset, trainlabels)
-sum_error = 0
-correct_classification = 0
-for i, pred in enumerate(classifier.predict(testset)):
-    #~ pred = 2.5
-    #~ print "Prediction is:", pred
-    #~ raw_input()
-    sum_error += abs(pred - testlabels[i])
-    if abs(pred-testlabels[i]) < (stddevs[i]*STDDEV_THRESHOLD):
-        correct_classification += 1
-
-print sum_error/len(testlabels)
-print str(float(correct_classification)/len(testlabels)*100)+"%"
+test_dataset(feature_vecs, ratings, stddevs, 1000)
 
 #~ print "Params", classifier.coef_
 #~ y_pos = np.arange(len(classifier.coef_[0]))

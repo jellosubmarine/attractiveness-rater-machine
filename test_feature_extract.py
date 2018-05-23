@@ -139,6 +139,14 @@ def create_feature_vec(landmarks):
     fv.append(err)
     return fv
 
+# Uses just plain landmarks for feature vectors
+def create_feature_vec_2(landmarks):
+    fv = []
+    for lm in landmarks:
+        fv.append(lm[0])
+        fv.append(lm[1])
+    return fv
+
 # Dump feature vector data into a file
 def write_features_to_file(path,feature_vecs):
     fout = open(path, 'w')
