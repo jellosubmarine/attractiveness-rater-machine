@@ -10,6 +10,8 @@ from math import atan, pi, floor, ceil
 from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 
+SHOW_PLOTS = False
+
 #Evaluate nose length
 def eval_nose_length(landmarks):
     return np.linalg.norm(np.asarray(landmarks[27])-np.asarray(landmarks[33]))
@@ -18,6 +20,48 @@ def eval_nose_length(landmarks):
 def eval_nose_roundness(landmarks):
     nose_points = landmarks[31:36]
     return np.polyfit(nose_points[:][0],nose_points[:][1], 2)[2]
+
+# Evaluate (distance between pupils)/(width of face)
+def eval_pupil_face_ratio(landmarks):
+    pupil_dist = float(landmarks[45][0]+landmarks[42][0] - landmarks[39][0]-landmarks[36][0])/2
+    face_width = (landmarks[16][0]-landmarks[0][0])
+    return float(pupil_dist)/face_width
+
+# Evaluate (nose to inside of eye)/(eye width)
+def eval_nose_to_eye_by_eye_width(landmarks):
+    nose_to_eye = float(landmarks[42][0]-landmarks[39][0])/2
+    eye_width = float(landmarks[45][0]-landmarks[42][0]+landmarks[39][0]-landmarks[36][0])/2
+    return nose_to_eye/eye_width
+
+# Evaluate (face side to eye outside)/(eye outside to nose center)
+def eval_face_side_to_eye_outside_by_eye_to_nose(landmarks):
+    face_to_eye = float(landmarks[16][0]-landmarks[45][0]+landmarks[36][0]-landmarks[0][0])/2
+    eye_to_nose = float(landmarks[45][0]-landmarks[36][0])/2
+    return face_to_eye/eye_to_nose
+
+# Evaluate horizontal distances in mouth
+def eval_mouth_horizontal(landmarks):
+    mouth_short = float(landmarks[54][0]-landmarks[52][0]+landmarks[50][0]-landmarks[48][0])/2
+    mouth_long = float(landmarks[54][0]-landmarks[50][0]+landmarks[52][0]-landmarks[48][0])/2
+    return mouth_short/mouth_long
+
+# Evaluate face side to inner eyebrow to face other side
+def eval_face_side_to_brow_inside_to_face_side(landmarks):
+    face_to_brow = float(landmarks[16][0]-landmarks[22][0]+landmarks[21][0]-landmarks[0][0])/2
+    brow_to_other = float(landmarks[16][0]-landmarks[21][0]+landmarks[22][0]-landmarks[0][0])/2
+    return face_to_brow/brow_to_other
+
+# Evaluate face side to inner eye to face other side
+def eval_face_side_to_eye_inside_to_face_side(landmarks):
+    face_to_eye = float(landmarks[16][0]-landmarks[42][0]+landmarks[39][0]-landmarks[0][0])/2
+    eye_to_other = float(landmarks[16][0]-landmarks[39][0]+landmarks[42][0]-landmarks[0][0])/2
+    return face_to_eye/eye_to_other
+
+# Evaluate face side to nose side to face other side
+def eval_face_side_to_nose_side_to_face_side(landmarks):
+    face_to_nose = float(landmarks[16][0]-landmarks[35][0]+landmarks[31][0]-landmarks[0][0])/2
+    nose_to_other = float(landmarks[16][0]-landmarks[31][0]+landmarks[35][0]-landmarks[0][0])/2
+    return face_to_nose/nose_to_other
 
 # Create symmetry evaluations for facial features
 def eval_symmetry(landmarks, sym_mapping):
@@ -67,19 +111,19 @@ def face_ellipse(landmarks):
 # Create feature vector for image
 def create_feature_vec(landmarks):
     fv = []
-    fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
-    fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
-    fv.append(eval_symmetry(landmarks, sym.face_sym)) # r = 0.060
-    fv.append(eval_symmetry(landmarks, sym.nose_sym)) # r = 0.010
+    #~ fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
+    #~ fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
+    #~ fv.append(eval_symmetry(landmarks, sym.face_sym)) # r = 0.060
+    #~ fv.append(eval_symmetry(landmarks, sym.nose_sym)) # r = 0.010
     fv.append(eval_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.125
     fv.append(eval_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.109
-    fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
-    fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
-    fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
+    #~ fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
+    #~ fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
+    #~ fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
     fv.append(eval_nose_length(landmarks)) # r = 0.307
-    fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
+    #~ fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
     ratio, err = face_ellipse(landmarks) 
-    fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
+    #~ fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
     fv.append(ratio) # r = 0.630
     fv.append(err) # r = 0.152
     return fv
@@ -151,8 +195,9 @@ def main(args):
             print str(i) + " failed xd"
             failed_images.append(i)
     
-    for i in range(len(feature_vecs[0])-2):
-        graph_feature(feature_vecs, ratings, i)
+    if SHOW_PLOTS:
+        for i in range(len(feature_vecs[0])-2):
+            graph_feature(feature_vecs, ratings, i)
     
     write_features_to_file("featurevectors.txt",feature_vecs)
     print "Feature vector creation completed"
