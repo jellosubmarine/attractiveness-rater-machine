@@ -93,6 +93,7 @@ def test_dataset(features, ratings, stddevs, repeats):
     print "Standard deviation for avg error:", np.std(np.array(error_results))
     print "Standard deviation for std results:", np.std(np.array(stddev_results))
 
+#Function to find best parameters for the algorithms
 def find_best_parameters(features, ratings):
     param_dist = {
         'n_estimators': [50, 100, 150],

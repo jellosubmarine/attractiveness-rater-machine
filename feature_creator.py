@@ -253,14 +253,20 @@ def graph_feature(feature_name, feature, ratings):
 #Cut cheeks
 def cut_cheeks():
     all_landmarks = read_in_landmarks("landmarks.txt")
-    for i in range(1,2):
+    for i in range(1,501):
         try:            
-            img = cv2.imread("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
+            img = cv2.imread("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg")
             landmarks = all_landmarks[i-1]
-            img = img[landmarks[1][1]:landmarks[31][1], [landmarks[1][0]:landmarks[31][0]]
-            cv2.imwrite("Cheeky_Data/SCUT-FBP-adjusted-"+str(i)+".jpg",img)
+            img = img[landmarks[1][1]:landmarks[31][1], landmarks[1][0]+20:landmarks[31][0]-20]
             
-            
+           
+            cv2.imwrite("Cheeky_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # img = cv2.dft(img, img)
+            f = np.fft.fft2(img)
+            fshift = np.fft.fftshift(f)
+            magnitude_spectrum = 20*np.log(np.abs(fshift))
+            cv2.imwrite("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",magnitude_spectrum)
         except Exception,e:
             print str(i) + " failed xd"
 
@@ -308,4 +314,5 @@ def main(args):
 
 if __name__ == '__main__':
     import sys
+    #cut_cheeks()
     sys.exit(main(sys.argv))
