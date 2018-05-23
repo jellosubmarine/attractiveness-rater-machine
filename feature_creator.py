@@ -7,6 +7,7 @@ import scipy
 from numpy.linalg import eig, inv
 from math import atan, pi, floor, ceil
 import sym_mappings as sym
+import pandas as pd
 
 #Evaluate nose length
 def eval_nose_length(landmarks):
