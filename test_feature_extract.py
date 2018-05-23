@@ -68,8 +68,8 @@ def process_image(path):
     if DISPLAY_IMAGE:
         # Mark face landmarks on image
         for i,point in enumerate(landmarks):
-            if i not in midline:
-                continue
+            #~ if i not in midline:
+                #~ continue
             cv2.circle(img,point,2,(255,0,0),-1)
         
         # Draw line of symmetry on the face
@@ -199,13 +199,25 @@ def write_features_to_file(path,feature_vecs):
         fout.write('\n')
     fout.close()
 
+# Read in ratings and rating standard deviation info
+def read_in_ratings(path):
+    fin = open(path,'r')
+    t = [ line.split(',') for line in fin.read().split('\n') if line ][1:]
+    fin.close()
+    ratings = [ float(line[1].strip()) for line in t ]
+    stddevs = [ float(line[2].strip()) for line in t ]
+    return ratings, stddevs
+
 def main(args):
     img = None
     feature_vecs = []
     failed_images = []
+    
+    ratings, stddevs = read_in_ratings("rating.csv")
+    
     if not DISPLAY_IMAGE:
         landmark_file = open("landmarks.txt", 'w')
-    for i in range(1,501):
+    for i in range(500,501):
         try:
             print i
             
@@ -223,7 +235,7 @@ def main(args):
                     if key == 27:
                         break
             
-            feature_vecs.append(create_feature_vec(landmarks))
+            feature_vecs.append(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])
         except Exception,e:
             print str(i) + " failed xd"
             failed_images.append(i)
