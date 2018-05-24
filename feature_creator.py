@@ -262,7 +262,7 @@ def face_ellipse(landmarks):
     return float(b)/a, err
 
 # Create feature vector for image
-def create_feature_vec(landmarks,i):
+def create_feature_vec(landmarks):
     fv = []
     # fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
     # fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
@@ -309,7 +309,6 @@ def create_feature_vec(landmarks,i):
     # fv.append(eval_chin_sharpness(landmarks)) # r = -0.070
     fv.append(eval_cheek_slope(landmarks)) # r = 0.397
     fv.append(eval_cheek_slope_change(landmarks)) # r = 0.420
-    # fv.append(fourier_file_read(i))
     fv.append(eval_outer_eye_location(landmarks)) # r = -0.212
     return fv
 
@@ -359,55 +358,6 @@ def graph_feature(feature_name, feature, ratings):
     plt.title(feature_name+", r = "+str(pearsonr(feature, ratings)[0]))
     plt.show()
 
-#Cut cheeks and save cheek and fourier cheek pics
-def cut_cheeks():
-    all_landmarks = read_in_landmarks("landmarks.txt")
-    for i in range(1,501):
-        try:          
-            img = cv2.imread("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg")
-            
-            landmarks = all_landmarks[i-1]
-            x = landmarks[31][0]
-            y = landmarks[31][1]
-            img = img[y-50:y, x-120:x-20]  
-            combined = np.zeros((np.shape(img[0])[0],np.shape(img[0])[1]*3))      
-            cv2.imwrite("Cheeky_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",img)
-            #img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    
-            for j in range(0,3):
-                combined[:np.shape(img[0])[0], j*np.shape(img[0])[1]:(j+1)*np.shape(img[0])[1]] = img[j]
-                # f = np.fft.fft2(img[i])
-                # fshift = np.fft.fftshift(f)
-                # magnitude_spectrum = 20*np.log(np.abs(fshift))
-            cv2.namedWindow("soust", cv2.WINDOW_AUTOSIZE)
-            cv2.imshow("soust", combined)
-            while 1:
-                    key = cv2.waitKey(1)
-                    if key == 27:
-                        break
-            #cv2.imwrite("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",magnitude_spectrum)
-        except Exception,e:
-            print e
-            print str(i) + " failed xd"
-
-#Create a txt file with fourier features to avoid imgproc every time
-def make_fourier_feature_file():
-    fourier_file = open("fourier_sums.txt", 'w')
-    for i in range(1,501):
-        try:
-            img = cv2.imread("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg")
-            sum_of_pixels = cv2.sumElems(img)[0]
-            fourier_file.write(str(sum_of_pixels) + '\n')
-        except Exception,e:
-            print str(i) + " failed xd"
-            print e
-    fourier_file.close()
-
-def fourier_file_read(index_of_picture):
-    fourier_file = open("fourier_sums.txt", 'r')
-    lines = fourier_file.readlines()
-    return float(lines[index_of_picture-1].strip())
-
 def main(args):
     img = None
     feature_vecs = []
@@ -416,9 +366,6 @@ def main(args):
     ratings, stddevs = read_in_ratings("rating.csv")
     
     all_landmarks = read_in_landmarks("landmarks.txt")
-    all_test_landmarks = read_in_landmarks("testlandmarks.txt")
-    
-    #~ pca_landmarks(all_landmarks)
     
     #Add feature vector labels here!
     
@@ -433,24 +380,11 @@ def main(args):
             
             landmarks = all_landmarks[i-1]
             
-            df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks,i)+[ratings[i-1],stddevs[i-1]])], columns=labels))
+            df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])], columns=labels))
         except Exception,e:
             print e
             print str(i) + " failed xd"
             failed_images.append(i)
-    
-    testlabels = labels[:-2]
-    tdf = pd.DataFrame.from_records([], columns=testlabels)
-    for i in range(1,7):
-        try:
-            #print i
-            
-            landmarks = all_test_landmarks[i-1]
-            
-            tdf = tdf.append(pd.DataFrame([tuple(create_feature_vec(landmarks,i))], columns=testlabels))
-        except Exception,e:
-            print e
-            print str(i) + " test failed xd"
 
     if SHOW_PLOTS:
         for i in range(len(labels)-2):
@@ -458,7 +392,6 @@ def main(args):
     
     #write_features_to_file("featurevectors.csv",feature_vecs)
     df.to_csv('featurevectors.csv')
-    tdf.to_csv('testfeaturevectors.csv')
     
     print "Feature vector creation completed"
     print "Failed image numbers:",
@@ -468,6 +401,4 @@ def main(args):
 
 if __name__ == '__main__':
     import sys
-    cut_cheeks()
-    #make_fourier_feature_file()
     sys.exit(main(sys.argv))

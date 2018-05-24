@@ -14,35 +14,6 @@ from sklearn.model_selection import RandomizedSearchCV
 
 STDDEV_THRESHOLD = 1.0
 
-# def read_in_feature_vectors(path):
-#     fin = open(path, 'r')
-#     t = [ line.split(' ') for line in fin.read().split('\n') if line ]
-#     fin.close()
-#     fvs = []
-#     ratings = []
-#     stddevs = []
-#     for line in t:
-#         fvs.append([ float(x) for x in line[:-2] ])
-#         ratings.append(float(line[-2]))
-#         stddevs.append(float(line[-1]))
-#     return fvs, ratings, stddevs
-
-# def divide_dataset(vectorset, labels, part_size):
-#     datalen = len(vectorset)
-#     shuffled_range = list(range(datalen))
-#     random.shuffle(shuffled_range)
-#     trainset = []
-#     trainlabels = []
-#     testset = []
-#     testlabels = []
-#     for i in shuffled_range[:int(datalen*part_size)]:
-#         trainset.append(copy.deepcopy(vectorset[i]))
-#         trainlabels.append(labels[i])
-#     for i in shuffled_range[int(datalen*part_size):]:
-#         testset.append(copy.deepcopy(vectorset[i]))
-#         testlabels.append(labels[i])
-#     return trainset, trainlabels, testset, testlabels
-
 def graph_feature(xs, ys):
     plt.plot(xs, ys, 'b.')
     plt.show()
@@ -58,15 +29,8 @@ def test_dataset(features, ratings, stddevs, repeats):
         
         trainset, testset, trainlabels, testlabels = train_test_split(features, ratings, test_size = 0.2)#, random_state = repeat_time)
         testlabels_all += list(testlabels)
-
-        #~ classifier = SVR()
-        #classifier = RandomForestRegressor(n_estimators=200)
-        #boosted_forest = RandomForestRegressor(n_estimators = 300)
-        #boosted_svr = SVR()
         
-        classifier = AdaBoostRegressor(SVR(kernel='rbf'))#,loss='square',learning_rate=1,n_estimators = 150)
-
-        # classifier = SVR(kernel='rbf')
+        classifier = AdaBoostRegressor(SVR(kernel='rbf'))
 
         classifier.fit(trainset, trainlabels)
         sum_error = 0
