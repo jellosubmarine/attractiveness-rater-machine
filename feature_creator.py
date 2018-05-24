@@ -10,6 +10,8 @@ from math import atan, pi, floor, ceil
 from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
+from sklearn.decomposition import PCA
+import copy
 
 SHOW_PLOTS = False
 
@@ -196,6 +198,38 @@ def eval_cheek_slope_change(landmarks):
     vert2 = landmarks[11][1]-landmarks[12][1]+landmarks[5][1]-landmarks[4][1]
     return atan(float(vert2)/hor2)-atan(float(vert1)/hor1)
 
+# Evaluate outer eye location
+def eval_outer_eye_location(landmarks):
+    return landmarks[16][0]-landmarks[45][0]+landmarks[36][0]-landmarks[0][0]
+
+# PCA on landmarks
+def pca_landmarks(all_landmarks):
+    pca = PCA()
+    flat_landmarks = []
+    for landmarks in all_landmarks:
+        flat_landmarks.append(np.reshape(np.array(landmarks),136))
+    pca.fit(np.array(flat_landmarks))
+    
+    component = pca.components_[0]
+    xs = [ component[2*i] for i in range(68) ]
+    ys = [ component[2*i+1] for i in range(68) ]
+    
+    plt.plot(xs,ys,'b.')
+    plt.show()
+    
+    landmarks1 = copy.deepcopy(all_landmarks[109])
+    landmarks2 = copy.deepcopy(all_landmarks[158])
+    for i in range(len(landmarks1)):
+        landmarks1[i] = ((landmarks1[i][0])*xs[i], landmarks1[i][1]*ys[i])
+        landmarks2[i] = ((landmarks2[i][0])*xs[i], landmarks2[i][1]*ys[i])
+    
+    plt.plot([ p[0] for p in landmarks1 ],[ p[1] for p in landmarks1 ],'b.')
+    plt.plot([ p[0] for p in landmarks2 ],[ p[1] for p in landmarks2 ],'r.')
+    plt.show()
+
+# Evaluate brow shape
+
+
 # Evaluate roundness of face and the eccentricity of ellipse
 def fitEllipse(x,y):
     x = x[:,np.newaxis]
@@ -275,7 +309,8 @@ def create_feature_vec(landmarks,i):
     # fv.append(eval_chin_sharpness(landmarks)) # r = -0.070
     fv.append(eval_cheek_slope(landmarks)) # r = 0.397
     fv.append(eval_cheek_slope_change(landmarks)) # r = 0.420
-    fv.append(fourier_file_read(i))
+    # fv.append(fourier_file_read(i))
+    fv.append(eval_outer_eye_location(landmarks)) # r = -0.212
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -381,14 +416,17 @@ def main(args):
     ratings, stddevs = read_in_ratings("rating.csv")
     
     all_landmarks = read_in_landmarks("landmarks.txt")
+    all_test_landmarks = read_in_landmarks("testlandmarks.txt")
+    
+    #~ pca_landmarks(all_landmarks)
+    
     #Add feature vector labels here!
     
     labels = ['Unknown_as_ratio','Face_ellipse_ratio',
               'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
-              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change', 'Fourier_sum_pixels',
+              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change', 'Outer_eye_location',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
-    print df
     for i in range(1,501):
         try:
             #print i
@@ -400,6 +438,19 @@ def main(args):
             print e
             print str(i) + " failed xd"
             failed_images.append(i)
+    
+    testlabels = labels[:-2]
+    tdf = pd.DataFrame.from_records([], columns=testlabels)
+    for i in range(1,7):
+        try:
+            #print i
+            
+            landmarks = all_test_landmarks[i-1]
+            
+            tdf = tdf.append(pd.DataFrame([tuple(create_feature_vec(landmarks,i))], columns=testlabels))
+        except Exception,e:
+            print e
+            print str(i) + " test failed xd"
 
     if SHOW_PLOTS:
         for i in range(len(labels)-2):
@@ -407,6 +458,7 @@ def main(args):
     
     #write_features_to_file("featurevectors.csv",feature_vecs)
     df.to_csv('featurevectors.csv')
+    tdf.to_csv('testfeaturevectors.csv')
     
     print "Feature vector creation completed"
     print "Failed image numbers:",

@@ -12,7 +12,8 @@ import imutils
 import orthoregress as orgr
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
-DISPLAY_IMAGE = True # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
+DISPLAY_IMAGE = False # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
+FOOL_AROUND = True # For testing our own images
 
 # Read in image data
 def process_image(path):
@@ -81,32 +82,41 @@ def main(args):
     img = None
     failed_images = []
     
-    if not DISPLAY_IMAGE:
+    if not DISPLAY_IMAGE and not FOOL_AROUND:
         landmark_file = open("landmarks.txt", 'w')
-    for i in range(1,501):
-        try:
-            print i
-            
-            landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
-            
-            if not DISPLAY_IMAGE:
-                landmark_file.write(" ".join([ str(p[0]) + ' ' + str(p[1]) for p in landmarks ])+'\n')
-                cv2.imwrite("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg",img)
-            else:
-                # Display image
-                cv2.imshow("Soust",img)
+    if not FOOL_AROUND:
+        for i in range(1,501):
+            try:
+                print i
                 
-                while 1:
-                    key = cv2.waitKey(1)
-                    if key == 27:
-                        break
-            
-        except Exception,e:
-            print str(i) + " failed xd"
-            failed_images.append(i)
+                landmarks, img = process_image("Data_Collection/SCUT-FBP-"+str(i)+".jpg")
+                
+                if not DISPLAY_IMAGE:
+                    landmark_file.write(" ".join([ str(p[0]) + ' ' + str(p[1]) for p in landmarks ])+'\n')
+                    cv2.imwrite("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg",img)
+                else:
+                    # Display image
+                    cv2.imshow("Soust",img)
+                    
+                    while 1:
+                        key = cv2.waitKey(1)
+                        if key == 27:
+                            break
+                
+            except Exception,e:
+                print str(i) + " failed xd"
+                failed_images.append(i)
     
-    if not DISPLAY_IMAGE:
+    if not DISPLAY_IMAGE and not FOOL_AROUND:
         landmark_file.close()
+    
+    if FOOL_AROUND:
+        test_landmark_file = open("testlandmarks.txt", 'a')
+        for i in range(6,7):
+            landmarks, img = process_image("Test_Data/Test-"+str(i)+".jpg")
+            test_landmark_file.write(" ".join([ str(p[0]) + ' ' + str(p[1]) for p in landmarks ])+'\n')
+            cv2.imwrite("Test_Data/Adjusted-"+str(i)+".jpg",img)
+        test_landmark_file.close()
     
     print "Failed image numbers:",
     for i in failed_images:

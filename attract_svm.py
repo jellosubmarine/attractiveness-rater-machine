@@ -131,7 +131,14 @@ stddevs = np.array(features['Stdev'])
 features= features.drop('True_rating', axis = 1)
 features= features.drop('Stdev', axis = 1)
 
-test_dataset(features, ratings, stddevs, 100)
+# test_dataset(features, ratings, stddevs, 100)
+
+# FOR THE LULZ
+testfeatures = pd.read_csv('testfeaturevectors.csv')
+classifier = AdaBoostRegressor(SVR(kernel='rbf'))
+classifier.fit(features, ratings)
+print classifier.predict(np.array(testfeatures))
+
 # find_best_parameters(features, ratings)
 
 #~ print "Params", classifier.coef_
