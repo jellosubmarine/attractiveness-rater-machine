@@ -170,6 +170,32 @@ def eval_face_width_change(landmarks):
     hor2 = landmarks[12][0]-landmarks[4][0]
     return float(hor1)/hor2
 
+# Evaluate chin shape
+def eval_chin_ratio(landmarks):
+    hor = landmarks[11][0]-landmarks[5][0]
+    vert = landmarks[8][1]-float(landmarks[11][1]+landmarks[5][1])/2
+    return hor/vert
+
+# Evaluate chin sharpness
+def eval_chin_sharpness(landmarks):
+    hor1 = landmarks[11][0]-landmarks[5][0]
+    hor2 = landmarks[9][0]-landmarks[7][0]
+    return float(hor1)/hor2
+
+# Evaluate cheek slope
+def eval_cheek_slope(landmarks):
+    hor = landmarks[16][0]-landmarks[13][0]+landmarks[3][0]-landmarks[0][0]
+    vert = landmarks[13][1]-landmarks[16][1]+landmarks[3][1]-landmarks[0][1]
+    return float(hor)/vert
+
+# Evaluate cheek slope change
+def eval_cheek_slope_change(landmarks):
+    hor1 = landmarks[14][0]-landmarks[13][0]+landmarks[3][0]-landmarks[2][0]
+    vert1 = landmarks[13][1]-landmarks[14][1]+landmarks[3][1]-landmarks[2][1]
+    hor2 = landmarks[12][0]-landmarks[11][0]+landmarks[5][0]-landmarks[4][0]
+    vert2 = landmarks[11][1]-landmarks[12][1]+landmarks[5][1]-landmarks[4][1]
+    return atan(float(vert2)/hor2)-atan(float(vert1)/hor1)
+
 # Evaluate roundness of face and the eccentricity of ellipse
 def fitEllipse(x,y):
     x = x[:,np.newaxis]
@@ -245,6 +271,10 @@ def create_feature_vec(landmarks):
     # fv.append(eval_eyes_face_width_ratio(landmarks)) # r = 0.246
     # fv.append(eval_eyes_face_height_ratio(landmarks)) # r = 0.177
     # fv.append(eval_eyes_angle(landmarks)) # r = 0.173
+    fv.append(eval_chin_ratio(landmarks)) # r = -0.577
+    # fv.append(eval_chin_sharpness(landmarks)) # r = -0.070
+    fv.append(eval_cheek_slope(landmarks)) # r = 0.397
+    fv.append(eval_cheek_slope_change(landmarks)) # r = 0.420
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -327,6 +357,7 @@ def main(args):
     
     labels = ['Unknown_as_ratio','Face_ellipse_ratio',
               'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
+              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
