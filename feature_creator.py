@@ -11,7 +11,7 @@ from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
@@ -328,22 +328,31 @@ def graph_feature(feature_name, feature, ratings):
 def cut_cheeks():
     all_landmarks = read_in_landmarks("landmarks.txt")
     for i in range(1,501):
-        try:            
+        try:          
             img = cv2.imread("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg")
+            
             landmarks = all_landmarks[i-1]
             x = landmarks[31][0]
             y = landmarks[31][1]
-            img = img[y-50:y, x-120:x-20]
-            
-           
+            img = img[y-50:y, x-120:x-20]  
+            combined = np.zeros((np.shape(img[0])[0],np.shape(img[0])[1]*3))      
             cv2.imwrite("Cheeky_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",img)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            # img = cv2.dft(img, img)
-            f = np.fft.fft2(img)
-            fshift = np.fft.fftshift(f)
-            magnitude_spectrum = 20*np.log(np.abs(fshift))
-            cv2.imwrite("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",magnitude_spectrum)
+            #img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    
+            for j in range(0,3):
+                combined[:np.shape(img[0])[0], j*np.shape(img[0])[1]:(j+1)*np.shape(img[0])[1]] = img[j]
+                # f = np.fft.fft2(img[i])
+                # fshift = np.fft.fftshift(f)
+                # magnitude_spectrum = 20*np.log(np.abs(fshift))
+            cv2.namedWindow("soust", cv2.WINDOW_AUTOSIZE)
+            cv2.imshow("soust", combined)
+            while 1:
+                    key = cv2.waitKey(1)
+                    if key == 27:
+                        break
+            #cv2.imwrite("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",magnitude_spectrum)
         except Exception,e:
+            print e
             print str(i) + " failed xd"
 
 #Create a txt file with fourier features to avoid imgproc every time
@@ -407,6 +416,6 @@ def main(args):
 
 if __name__ == '__main__':
     import sys
-    #cut_cheeks()
+    cut_cheeks()
     #make_fourier_feature_file()
     sys.exit(main(sys.argv))
