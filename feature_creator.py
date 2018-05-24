@@ -13,6 +13,20 @@ import pandas as pd
 
 SHOW_PLOTS = True
 
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+#Evaluate angle between eyes
+def eval_eyes_angle(landmarks):
+    v1 = np.asarray(landmarks[36])-np.asarray(landmarks[39])
+    v2 = np.asarray(landmarks[42])-np.asarray(landmarks[45])
+
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 #Evaluate nose length
 def eval_nose_length(landmarks):
     return np.linalg.norm(np.asarray(landmarks[27])-np.asarray(landmarks[33]))
@@ -39,6 +53,18 @@ def eval_eyes_eyebrows_height_ratio(landmarks):
     eyes_height = np.linalg.norm(np.asarray(landmarks[39])-np.asarray(landmarks[8]))
     eyebrows_height = np.linalg.norm(np.asarray(landmarks[19])-np.asarray(landmarks[8]))
     return eyes_height/eyebrows_height
+
+#Evaluate eyewidth-facewidth ratio 
+def eval_eyes_face_width_ratio(landmarks):
+    eyes_width = np.linalg.norm(np.asarray(landmarks[39])-np.asarray(landmarks[36]))
+    face_width = np.linalg.norm(np.asarray(landmarks[16])-np.asarray(landmarks[0]))
+    return eyes_width/face_width
+
+#Evaluate eyeheight-faceheight ratio 
+def eval_eyes_face_height_ratio(landmarks):
+    eyes_height = np.linalg.norm(np.asarray(landmarks[37])-np.asarray(landmarks[41]))
+    face_height = abs(landmarks[0][1]-landmarks[8][1])
+    return eyes_height/face_height
 
 #Evaluate nose curvature
 def eval_nose_roundness(landmarks):
@@ -187,35 +213,38 @@ def create_feature_vec(landmarks):
     # fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
     # fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
     # fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
-    #~ fv.append(eval_nose_length(landmarks)) # r = 0.307
+    # fv.append(eval_nose_length(landmarks)) # r = 0.307
     # fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
     ratio, err = face_ellipse(landmarks) 
-    #fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
+    fv.append(abs(ratio-2)) # r = -0.372
     fv.append(ratio) # r = 0.630
     # fv.append(err) # r = 0.152
-    #~ fv.append(eval_pupil_face_ratio(landmarks)) # r = 0.190
-    #~ fv.append(eval_nose_to_eye_by_eye_width(landmarks)) # r = -0.097
-    #~ fv.append(eval_face_side_to_eye_outside_by_eye_to_nose(landmarks)) # r = -0.223
-    #~ fv.append(eval_mouth_horizontal(landmarks)) # r = -0.151
-    #~ fv.append(eval_face_side_to_brow_inside_to_face_side(landmarks)) # r = -0.280
-    #~ fv.append(eval_face_side_to_eye_inside_to_face_side(landmarks)) # r = -0.106
-    #~ fv.append(eval_face_side_to_nose_side_to_face_side(landmarks)) # r = 0.183
+    # fv.append(eval_pupil_face_ratio(landmarks)) # r = 0.190
+    # fv.append(eval_nose_to_eye_by_eye_width(landmarks)) # r = -0.097
+    # fv.append(eval_face_side_to_eye_outside_by_eye_to_nose(landmarks)) # r = -0.223
+    # fv.append(eval_mouth_horizontal(landmarks)) # r = -0.151
+    # fv.append(eval_face_side_to_brow_inside_to_face_side(landmarks)) # r = -0.280
+    # fv.append(eval_face_side_to_eye_inside_to_face_side(landmarks)) # r = -0.106
+    # fv.append(eval_face_side_to_nose_side_to_face_side(landmarks)) # r = 0.183
     fv.append(eval_nose_vertical_prop(landmarks)) # r = -0.435
-    #~ fv.append(eval_mouth_size(landmarks)) # r = 0.021
+    # fv.append(eval_mouth_size(landmarks)) # r = 0.021
     fv.append(eval_nose_eyes_height_ratio(landmarks)) # r = -0.414
     # fv.append(eval_nose_mouth_height_ratio(landmarks)) # r = -0.078
     # fv.append(eval_eyes_mouth_height_ratio(landmarks)) # r = 0.157
     # fv.append(eval_eyes_eyebrows_height_ratio(landmarks)) # r = 0.028
-    #~ fv.append(eval_eye_axes(landmarks)) # r = -0.281
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.eye_sym)) # r = -0.008
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.brow_sym)) # r = -0.014
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.face_sym)) # r = 0.051
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.nose_sym)) # r = 0.066
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.091
-    #~ fv.append(eval_vertical_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.078
-    #~ fv.append(eval_eye_similarness(landmarks)) # r = 0.013
-    #~ fv.append(eval_face_shape(landmarks)) # r = 0.053
+    # fv.append(eval_eye_axes(landmarks)) # r = -0.281
+    # fv.append(eval_vertical_symmetry(landmarks, sym.eye_sym)) # r = -0.008
+    # fv.append(eval_vertical_symmetry(landmarks, sym.brow_sym)) # r = -0.014
+    # fv.append(eval_vertical_symmetry(landmarks, sym.face_sym)) # r = 0.051
+    # fv.append(eval_vertical_symmetry(landmarks, sym.nose_sym)) # r = 0.066
+    # fv.append(eval_vertical_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.091
+    # fv.append(eval_vertical_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.078
+    # fv.append(eval_eye_similarness(landmarks)) # r = 0.013
+    # fv.append(eval_face_shape(landmarks)) # r = 0.053
     fv.append(eval_face_width_change(landmarks)) # r = 0.499
+    # fv.append(eval_eyes_face_width_ratio(landmarks)) # r = 0.246
+    # fv.append(eval_eyes_face_height_ratio(landmarks)) # r = 0.177
+    # fv.append(eval_eyes_angle(landmarks)) # r = 0.173
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -264,6 +293,28 @@ def graph_feature(feature_name, feature, ratings):
     plt.title(feature_name+", r = "+str(pearsonr(feature, ratings)[0]))
     plt.show()
 
+#Cut cheeks
+def cut_cheeks():
+    all_landmarks = read_in_landmarks("landmarks.txt")
+    for i in range(1,501):
+        try:            
+            img = cv2.imread("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg")
+            landmarks = all_landmarks[i-1]
+            img = img[landmarks[1][1]:landmarks[31][1], landmarks[1][0]+20:landmarks[31][0]-20]
+            
+           
+            cv2.imwrite("Cheeky_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # img = cv2.dft(img, img)
+            f = np.fft.fft2(img)
+            fshift = np.fft.fftshift(f)
+            magnitude_spectrum = 20*np.log(np.abs(fshift))
+            cv2.imwrite("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",magnitude_spectrum)
+        except Exception,e:
+            print str(i) + " failed xd"
+
+
+
 def main(args):
     img = None
     feature_vecs = []
@@ -274,7 +325,7 @@ def main(args):
     all_landmarks = read_in_landmarks("landmarks.txt")
     #Add feature vector labels here!
     
-    labels = ['Face_ellipse_ratio',
+    labels = ['Unknown_as_ratio','Face_ellipse_ratio',
               'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
@@ -306,4 +357,5 @@ def main(args):
 
 if __name__ == '__main__':
     import sys
+    #cut_cheeks()
     sys.exit(main(sys.argv))
