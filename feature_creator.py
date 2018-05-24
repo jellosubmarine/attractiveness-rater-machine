@@ -11,7 +11,7 @@ from scipy.stats.stats import pearsonr
 import sym_mappings as sym
 import pandas as pd
 
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 #Evaluate nose length
 def eval_nose_length(landmarks):
@@ -97,6 +97,12 @@ def eval_nose_vertical_prop(landmarks):
 def eval_mouth_size(landmarks):
     return landmarks[54][0]-landmarks[48][0]
 
+# Evaluate eye proportions
+def eval_eye_axes(landmarks):
+    eye_vertical = float(landmarks[37][1]+landmarks[38][1]+landmarks[43][1]+landmarks[44][1]-landmarks[41][1]-landmarks[40][1]-landmarks[47][1]-landmarks[46][1])/4
+    eye_horizontal = float(landmarks[45][0]-landmarks[42][0]+landmarks[39][0]-landmarks[36][0])/2
+    return eye_vertical/eye_horizontal
+
 # Create symmetry evaluations for facial features
 def eval_symmetry(landmarks, sym_mapping):
     s = 0
@@ -107,9 +113,36 @@ def eval_symmetry(landmarks, sym_mapping):
         s += abs(a[1]-b[1])
     return s
 
+# Create vertical symmetry evaluations for facial features
+def eval_vertical_symmetry(landmarks, sym_mapping):
+    s = 0
+    for i,j in sym_mapping:
+        a = landmarks[i]
+        b = landmarks[j]
+        s += abs(a[1]-b[1])
+    return s
+
+# Evaluate how similar eye measurements are for two eyes (not eye location)
+def eval_eye_similarness(landmarks):
+    hor_diff = abs(landmarks[45][0]-landmarks[42][0]-landmarks[39][0]+landmarks[36][0])
+    vert_diff = abs(landmarks[37][1]+landmarks[38][1]-landmarks[40][0]-landmarks[41][0]+landmarks[47][0]+landmarks[46][0]-landmarks[44][0]-landmarks[43][0])
+    return hor_diff+float(vert_diff)/2
+
 # Evaluate whether features in the middle of the face are actually in the middle
 def eval_center(landmarks, middle_list):
     return sum([ abs(landmarks[i][0]-250) for i in middle_list ])
+
+# Evaluate (eyebrows to chin)/(face side to side)
+def eval_face_shape(landmarks):
+    vert = landmarks[8][1]-float(landmarks[19][1]+landmarks[24][1])/2
+    hor = landmarks[16][0]-landmarks[0][0]
+    return vert/hor
+
+# Evaluate face width on top vs bottom
+def eval_face_width_change(landmarks):
+    hor1 = landmarks[16][0]-landmarks[0][0]
+    hor2 = landmarks[12][0]-landmarks[4][0]
+    return float(hor1)/hor2
 
 # Evaluate roundness of face and the eccentricity of ellipse
 def fitEllipse(x,y):
@@ -154,7 +187,7 @@ def create_feature_vec(landmarks):
     # fv.append(eval_center(landmarks, sym.nose_center)) # r = 0.090
     # fv.append(eval_center(landmarks, sym.mouth_center)) # r = 0.050
     # fv.append(eval_center(landmarks, sym.chin_center)) # r = 0.042
-    fv.append(eval_nose_length(landmarks)) # r = 0.307
+    #~ fv.append(eval_nose_length(landmarks)) # r = 0.307
     # fv.append(eval_nose_roundness(landmarks)) # r = -0.057 (looks weird as a plot, might actually be better with a few outliers that mess things up)
     ratio, err = face_ellipse(landmarks) 
     #fv.append(abs(ratio-((1 + 5 ** 0.5) / 2.0))) # r = -0.372
@@ -164,7 +197,7 @@ def create_feature_vec(landmarks):
     #~ fv.append(eval_nose_to_eye_by_eye_width(landmarks)) # r = -0.097
     #~ fv.append(eval_face_side_to_eye_outside_by_eye_to_nose(landmarks)) # r = -0.223
     #~ fv.append(eval_mouth_horizontal(landmarks)) # r = -0.151
-    fv.append(eval_face_side_to_brow_inside_to_face_side(landmarks)) # r = -0.280
+    #~ fv.append(eval_face_side_to_brow_inside_to_face_side(landmarks)) # r = -0.280
     #~ fv.append(eval_face_side_to_eye_inside_to_face_side(landmarks)) # r = -0.106
     #~ fv.append(eval_face_side_to_nose_side_to_face_side(landmarks)) # r = 0.183
     fv.append(eval_nose_vertical_prop(landmarks)) # r = -0.435
@@ -173,6 +206,16 @@ def create_feature_vec(landmarks):
     # fv.append(eval_nose_mouth_height_ratio(landmarks)) # r = -0.078
     # fv.append(eval_eyes_mouth_height_ratio(landmarks)) # r = 0.157
     # fv.append(eval_eyes_eyebrows_height_ratio(landmarks)) # r = 0.028
+    #~ fv.append(eval_eye_axes(landmarks)) # r = -0.281
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.eye_sym)) # r = -0.008
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.brow_sym)) # r = -0.014
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.face_sym)) # r = 0.051
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.nose_sym)) # r = 0.066
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.outer_mouth_sym)) # r = 0.091
+    #~ fv.append(eval_vertical_symmetry(landmarks, sym.inner_mouth_sym)) # r = 0.078
+    #~ fv.append(eval_eye_similarness(landmarks)) # r = 0.013
+    #~ fv.append(eval_face_shape(landmarks)) # r = 0.053
+    fv.append(eval_face_width_change(landmarks)) # r = 0.499
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -231,8 +274,8 @@ def main(args):
     all_landmarks = read_in_landmarks("landmarks.txt")
     #Add feature vector labels here!
     
-    labels = ['Nose_length', 'Face_ellipse_ratio', 'Face_side_with_brow',
-              'Nose_vertical_prop', 'Eyes-nose_height_ratio',
+    labels = ['Face_ellipse_ratio',
+              'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df

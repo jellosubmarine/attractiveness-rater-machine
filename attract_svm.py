@@ -11,7 +11,7 @@ from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
-STDDEV_THRESHOLD = 0.5
+STDDEV_THRESHOLD = 1.0
 
 # def read_in_feature_vectors(path):
 #     fin = open(path, 'r')
@@ -97,7 +97,7 @@ stddevs = np.array(features['Stdev'])
 features= features.drop('True_rating', axis = 1)
 features= features.drop('Stdev', axis = 1)
 
-test_dataset(features, ratings, stddevs, 1000)
+test_dataset(features, ratings, stddevs, 100)
 
 #~ print "Params", classifier.coef_
 #~ y_pos = np.arange(len(classifier.coef_[0]))
