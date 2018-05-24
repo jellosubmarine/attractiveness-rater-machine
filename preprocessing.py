@@ -12,8 +12,8 @@ import imutils
 import orthoregress as orgr
 
 align = openface.AlignDlib("shape_predictor_68_face_landmarks.dat")
-DISPLAY_IMAGE = False # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
-FOOL_AROUND = True # For testing our own images
+DISPLAY_IMAGE = True # Marks whether the aim is to analyze or to visually inspect (essentially debug mode)
+FOOL_AROUND = False # For testing our own images
 
 # Read in image data
 def process_image(path):

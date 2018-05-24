@@ -203,12 +203,19 @@ def eval_outer_eye_location(landmarks):
     return landmarks[16][0]-landmarks[45][0]+landmarks[36][0]-landmarks[0][0]
 
 # PCA on landmarks
-def pca_landmarks(all_landmarks):
-    pca = PCA()
+def pca_landmarks(all_landmarks, ratings):
+    pca = PCA(n_components=1)
     flat_landmarks = []
     for landmarks in all_landmarks:
         flat_landmarks.append(np.reshape(np.array(landmarks),136))
     pca.fit(np.array(flat_landmarks))
+    
+    sumthin = pca.transform(flat_landmarks)
+    
+    print sumthin.shape
+    
+    plt.plot(sumthin,ratings,'b.')
+    plt.show()
     
     component = pca.components_[0]
     xs = [ component[2*i] for i in range(68) ]
@@ -307,9 +314,9 @@ def create_feature_vec(landmarks):
     # fv.append(eval_eyes_angle(landmarks)) # r = 0.173
     fv.append(eval_chin_ratio(landmarks)) # r = -0.577
     # fv.append(eval_chin_sharpness(landmarks)) # r = -0.070
-    fv.append(eval_cheek_slope(landmarks)) # r = 0.397
+    # fv.append(eval_cheek_slope(landmarks)) # r = 0.397
     fv.append(eval_cheek_slope_change(landmarks)) # r = 0.420
-    fv.append(eval_outer_eye_location(landmarks)) # r = -0.212
+    # fv.append(eval_outer_eye_location(landmarks)) # r = -0.212
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -356,6 +363,8 @@ def read_in_ratings(path):
 def graph_feature(feature_name, feature, ratings):
     plt.plot(feature, ratings, 'b.')
     plt.title(feature_name+", r = "+str(pearsonr(feature, ratings)[0]))
+    plt.xlabel("Feature")
+    plt.ylabel("Rating")
     plt.show()
 
 def main(args):
@@ -366,12 +375,13 @@ def main(args):
     ratings, stddevs = read_in_ratings("rating.csv")
     
     all_landmarks = read_in_landmarks("landmarks.txt")
+    # pca_landmarks(all_landmarks, ratings)
     
     #Add feature vector labels here!
     
-    labels = ['Unknown_as_ratio','Face_ellipse_ratio',
+    labels = ['Unknown_as_ratio','Ratio of ellipse axes',
               'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
-              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change', 'Outer_eye_location',
+              'Chin_ratio', 'Cheek_slope_change',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     for i in range(1,501):

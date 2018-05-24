@@ -11,6 +11,7 @@ from sklearn.ensemble import AdaBoostRegressor
 from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.decomposition import PCA
 
 STDDEV_THRESHOLD = 1.0
 
@@ -30,13 +31,19 @@ def test_dataset(features, ratings, stddevs, repeats):
         trainset, testset, trainlabels, testlabels = train_test_split(features, ratings, test_size = 0.2)#, random_state = repeat_time)
         testlabels_all += list(testlabels)
         
+        pca = PCA(n_components=3)
+        pca_transformed = pca.fit_transform(trainset)
+        #~ plt.plot(pca_transformed,trainlabels,'b.')
+        #~ plt.show()
+        
         classifier = AdaBoostRegressor(SVR(kernel='rbf'))
 
-        classifier.fit(trainset, trainlabels)
+        classifier.fit(pca_transformed, trainlabels)
         sum_error = 0
         correct_classification = 0
         predlabels = []
-        for i, pred in enumerate(classifier.predict(testset)):
+        pca_testset = pca.transform(testset)
+        for i, pred in enumerate(classifier.predict(pca_testset)):
             predlabels.append(pred)
             #~ pred = 2.6
             #~ print "Prediction is:", pred
@@ -92,16 +99,22 @@ def find_best_parameters(features, ratings):
 features = pd.read_csv('featurevectors.csv')
 ratings = np.array(features['True_rating'])
 stddevs = np.array(features['Stdev'])
+#~ plt.hist(ratings, bins=20)
+#~ plt.show()
+#~ plt.plot(ratings,stddevs,'k.')
+#~ plt.xlabel("Ratings")
+#~ plt.ylabel("Rating standard deviations")
+#~ plt.show()
 features= features.drop('True_rating', axis = 1)
 features= features.drop('Stdev', axis = 1)
 
-# test_dataset(features, ratings, stddevs, 100)
+test_dataset(features, ratings, stddevs, 100)
 
 # FOR THE LULZ
-testfeatures = pd.read_csv('testfeaturevectors.csv')
-classifier = AdaBoostRegressor(SVR(kernel='rbf'))
-classifier.fit(features, ratings)
-print classifier.predict(np.array(testfeatures))
+#~ testfeatures = pd.read_csv('testfeaturevectors.csv')
+#~ classifier = AdaBoostRegressor(SVR(kernel='rbf'))
+#~ classifier.fit(features, ratings)
+#~ print classifier.predict(np.array(testfeatures))
 
 # find_best_parameters(features, ratings)
 
