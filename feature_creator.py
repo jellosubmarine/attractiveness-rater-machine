@@ -228,7 +228,7 @@ def face_ellipse(landmarks):
     return float(b)/a, err
 
 # Create feature vector for image
-def create_feature_vec(landmarks):
+def create_feature_vec(landmarks,i):
     fv = []
     # fv.append(eval_symmetry(landmarks, sym.eye_sym)) # r = 0.033
     # fv.append(eval_symmetry(landmarks, sym.brow_sym)) # r = 0.034
@@ -275,6 +275,7 @@ def create_feature_vec(landmarks):
     # fv.append(eval_chin_sharpness(landmarks)) # r = -0.070
     fv.append(eval_cheek_slope(landmarks)) # r = 0.397
     fv.append(eval_cheek_slope_change(landmarks)) # r = 0.420
+    fv.append(fourier_file_read(i))
     return fv
 
 # Uses just plain landmarks for feature vectors
@@ -323,14 +324,16 @@ def graph_feature(feature_name, feature, ratings):
     plt.title(feature_name+", r = "+str(pearsonr(feature, ratings)[0]))
     plt.show()
 
-#Cut cheeks
+#Cut cheeks and save cheek and fourier cheek pics
 def cut_cheeks():
     all_landmarks = read_in_landmarks("landmarks.txt")
     for i in range(1,501):
         try:            
             img = cv2.imread("Adjusted_Data/SCUT-FBP-adjusted-"+str(i)+".jpg")
             landmarks = all_landmarks[i-1]
-            img = img[landmarks[1][1]:landmarks[31][1], landmarks[1][0]+20:landmarks[31][0]-20]
+            x = landmarks[31][0]
+            y = landmarks[31][1]
+            img = img[y-50:y, x-120:x-20]
             
            
             cv2.imwrite("Cheeky_Data/SCUT-FBP-cheeky-"+str(i)+".jpg",img)
@@ -343,7 +346,23 @@ def cut_cheeks():
         except Exception,e:
             print str(i) + " failed xd"
 
+#Create a txt file with fourier features to avoid imgproc every time
+def make_fourier_feature_file():
+    fourier_file = open("fourier_sums.txt", 'w')
+    for i in range(1,501):
+        try:
+            img = cv2.imread("Cheeky_Fourier_Data/SCUT-FBP-cheeky-"+str(i)+".jpg")
+            sum_of_pixels = cv2.sumElems(img)[0]
+            fourier_file.write(str(sum_of_pixels) + '\n')
+        except Exception,e:
+            print str(i) + " failed xd"
+            print e
+    fourier_file.close()
 
+def fourier_file_read(index_of_picture):
+    fourier_file = open("fourier_sums.txt", 'r')
+    lines = fourier_file.readlines()
+    return float(lines[index_of_picture-1].strip())
 
 def main(args):
     img = None
@@ -357,7 +376,7 @@ def main(args):
     
     labels = ['Unknown_as_ratio','Face_ellipse_ratio',
               'Nose_vertical_prop', 'Eyes-nose_height_ratio', 'Face_width_change',
-              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change',
+              'Chin_ratio', 'Cheek_slope', 'Cheek_slope_change', 'Fourier_sum_pixels',
               'True_rating', 'Stdev']
     df = pd.DataFrame.from_records([], columns=labels)
     print df
@@ -367,12 +386,12 @@ def main(args):
             
             landmarks = all_landmarks[i-1]
             
-            df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks)+[ratings[i-1],stddevs[i-1]])], columns=labels))
+            df = df.append(pd.DataFrame([tuple(create_feature_vec(landmarks,i)+[ratings[i-1],stddevs[i-1]])], columns=labels))
         except Exception,e:
             print e
             print str(i) + " failed xd"
             failed_images.append(i)
-    
+
     if SHOW_PLOTS:
         for i in range(len(labels)-2):
             graph_feature(labels[i], df[labels[i]], ratings)
@@ -389,4 +408,5 @@ def main(args):
 if __name__ == '__main__':
     import sys
     #cut_cheeks()
+    #make_fourier_feature_file()
     sys.exit(main(sys.argv))
