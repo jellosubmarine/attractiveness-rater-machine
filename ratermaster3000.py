@@ -36,15 +36,15 @@ def train_classifier():
 
 def main(args):
     classifier = train_classifier()
-    for i in range(1,5):
+    for i in range(4,5):
         img, rating = rate_image('Custom_images/'+str(i) +'.jpg', classifier)
         print str(i) + ' ' + str(round(rating, 2))
         cv2.imshow("Soust",img) 
         while 1:
             key = cv2.waitKey(1)
-            if key:
+            if key == 27:
                 break
-
+    
 if __name__ == '__main__':
     import sys
     sys.exit(main(sys.argv))
